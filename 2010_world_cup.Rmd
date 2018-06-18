@@ -1,0 +1,64 @@
+
+---
+title: "2010 World Cup"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: ioslides_presentation
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=FALSE}
+Sys.setlocale("LC_ALL", 'en_GB.UTF-8')
+```
+
+# 2010 World Cup
+
+Data from [The
+Guardian](https://www.theguardian.com/news/datablog/2010/jul/09/world-cup-2010-statistics).
+
+```{r, message=FALSE, echo=FALSE}
+library(tidyverse)
+library(plotly)
+teams <- read_csv("World Cup 2010 data - TEAM.csv")
+goals <- teams  %>%
+    filter(Team == "Ave Goals per game") %>%
+    gather("Algeria":"Uruguay", key = "country", value = "avg_goals")
+shots <- teams  %>%
+    filter(Team == "Shots (excl blocked shots)") %>%
+    gather("Algeria":"Uruguay", key = "country", value = "shots")
+passes <- teams %>%
+    filter(Team == "Overall Pass Completion %") %>%
+    gather("Algeria":"Uruguay", key = "country", value = "passes")
+passes$passes <- parse_number(passes$passes)
+cup <- merge(goals[, 2:3], shots[, 2:3], by = "country")
+cup <- merge(cup, passes[, 2:3], by = "country")
+cup$avg_goals <- as.numeric(cup$avg_goals)
+cup$shots <- as.numeric(cup$shots)
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+f <- list(
+    family = "Courier New, monospace",
+    size = 18,
+    color = "#7f7f7f"
+)
+x <- list(
+    title = "Number of shots (excl. blocked shots)",
+    titlefont = f,
+    zeroline = FALSE
+)
+y <- list(
+    title = "Average goals per game",
+    titlefont = f,
+    zeroline = FALSE
+)
+p <- plot_ly(cup, x = ~shots, y = ~avg_goals,
+             text = ~paste(country, '<br>Overall pass completion (%):', passes),
+             color = ~passes, size = ~passes,
+             type = "scatter",
+             marker = list(colorbar = list(len = 0.2,
+                                           title = "Overall pass completion (%)"))) %>%
+    layout(title = '2010 World Cup',
+           yaxis = y,
+           xaxis = x)
+p
+```
